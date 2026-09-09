@@ -1,0 +1,27 @@
+name: iOSMusicDL
+options:
+  bundleIdPrefix: com.amine
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  iOSMusicDL:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/iOSMusicDL
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: MusicDL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.amine.iOSMusicDL
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1"

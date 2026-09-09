@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+*.db
+
+# Swift / macOS
+.build/
+DerivedData/
+*.swiftpm/
+Packages/
+*.app/
+*.dmg
+
+# Universal
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+
+# Env / secrets
+.env*
+endpoint_manifest_cache.json
+provider_stats.db
+rthook_ffmpeg.py
+
+# Remote tunnel logs & runtime artifacts
+.remote/
+com.musicdl.remote.plist
+.antra_auth.json
+*.mobileprovision
