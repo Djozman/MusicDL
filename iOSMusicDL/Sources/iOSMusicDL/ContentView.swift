@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var completedTracks: Int = 0
     @State private var totalTracks: Int = 0
     @State private var currentTrackTitle: String = ""
+    @State private var fetchStatus: String = ""
 
     enum Phase { case idle, loading, preview, downloading, done(String), error(String) }
 
@@ -78,10 +79,18 @@ struct ContentView: View {
 
     private var downloadingView: some View {
         VStack(spacing: 16) {
-            ProgressView(value: Double(completedTracks), total: Double(max(totalTracks, 1))).progressViewStyle(.linear)
-            if totalTracks > 1 { Text("\(completedTracks) of \(totalTracks) tracks").font(.headline) }
-            if !currentTrackTitle.isEmpty { Text(currentTrackTitle).font(.caption).foregroundColor(.secondary).lineLimit(1) }
-            Text("Downloading…").foregroundColor(.secondary)
+            if totalTracks > 1 { ProgressView(value: Double(completedTracks), total: Double(totalTracks)).progressViewStyle(.linear) } else { ProgressView().controlSize(.large) }
+            
+            if !fetchStatus.isEmpty {
+                Text(fetchStatus).font(.headline)
+            } else if totalTracks > 1 {
+                Text("\(completedTracks) of \(totalTracks) tracks downloaded").font(.headline)
+            }
+            
+            if !currentTrackTitle.isEmpty && fetchStatus.isEmpty {
+                Text(currentTrackTitle).font(.caption).foregroundColor(.secondary).lineLimit(1)
+            }
+            Text("Working…").foregroundColor(.secondary)
         }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -115,7 +124,7 @@ struct ContentView: View {
     private func download() {
         let text = link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        completedTracks = 0; totalTracks = preview?.trackCount ?? 1; currentTrackTitle = ""; shareURLs = []
+        completedTracks = 0; totalTracks = preview?.trackCount ?? 1; currentTrackTitle = ""; shareURLs = []; fetchStatus = ""
         phase = .downloading
         Task {
             do {
@@ -130,8 +139,16 @@ struct ContentView: View {
                     if st == "done" {
                         let files = s.files ?? []
                         guard let base = s.base_url, !files.isEmpty else { phase = .error("No audio files were downloaded."); return }
-                        for file in files { let url = try await api.fetchFile(base + file); shareURLs.append(url) }
+                        
+                        fetchStatus = "Fetching files..."
+                        for (index, file) in files.enumerated() {
+                            fetchStatus = "Fetching file \(index + 1) of \(files.count)..."
+                            let url = try await api.fetchFile(base + file)
+                            shareURLs.append(url)
+                        }
+                        
                         let msg = files.count == 1 ? "Downloaded \(files.first ?? "")" : "Downloaded \(files.count) tracks"
+                        fetchStatus = ""
                         phase = .done(msg)
                         return
                     }
@@ -142,7 +159,7 @@ struct ContentView: View {
     }
 
     private func reset() {
-        preview = nil; shareURLs = []; link = ""; completedTracks = 0; totalTracks = 0; currentTrackTitle = ""; phase = .idle
+        preview = nil; shareURLs = []; link = ""; completedTracks = 0; totalTracks = 0; currentTrackTitle = ""; fetchStatus = ""; phase = .idle
     }
 }
 

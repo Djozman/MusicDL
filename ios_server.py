@@ -11,6 +11,7 @@ import tempfile
 import threading
 import time
 import urllib.parse
+import glob
 from collections import defaultdict
 
 REPO = os.path.dirname(os.path.abspath(__file__))
@@ -21,26 +22,20 @@ PORT = 8080
 LOCK = threading.Lock()
 SESSIONS = {}
 
-# Rate limiting: track failed auth attempts per IP
 RATE_LOCK = threading.Lock()
 FAILED_ATTEMPTS = defaultdict(list)
 MAX_ATTEMPTS = 5
-BLOCK_DURATION = 300  # 5 minutes
-
+BLOCK_DURATION = 300
 
 def _is_blocked(ip):
-    """Check if an IP is currently blocked due to too many failed attempts."""
     now = time.time()
     with RATE_LOCK:
         attempts = FAILED_ATTEMPTS.get(ip, [])
-        # Clean old attempts (older than block duration)
         attempts = [t for t in attempts if now - t < BLOCK_DURATION]
         FAILED_ATTEMPTS[ip] = attempts
         return len(attempts) >= MAX_ATTEMPTS
 
-
 def _record_failed_auth(ip):
-    """Record a failed auth attempt for an IP."""
     now = time.time()
     with RATE_LOCK:
         attempts = FAILED_ATTEMPTS.get(ip, [])
@@ -48,36 +43,24 @@ def _record_failed_auth(ip):
         attempts.append(now)
         FAILED_ATTEMPTS[ip] = attempts
 
-
 def _clear_failed_auth(ip):
-    """Clear failed attempts for an IP after successful auth."""
     with RATE_LOCK:
         FAILED_ATTEMPTS.pop(ip, None)
 
-
 def _check_auth(handler):
-    """Returns True if authorized, False if blocked/rejected."""
     client_ip = handler.client_address[0]
     token = os.environ.get("IOS_SERVER_TOKEN", "")
-
-    # If no token configured, allow all (local dev)
     if not token:
         return True
-
-    # Check rate limit
     if _is_blocked(client_ip):
         handler._send_json(429, {"error": "Too many failed attempts. Try again later."})
         return False
-
-    # Check token
     if handler.headers.get("x-auth-token", "") != token:
         _record_failed_auth(client_ip)
         handler._send_json(401, {"error": "unauthorized"})
         return False
-
     _clear_failed_auth(client_ip)
     return True
-
 
 def handle_preview(body):
     url = (body or {}).get("url", "").strip()
@@ -95,7 +78,6 @@ def handle_preview(body):
         except Exception:
             continue
     return 502, {"type": "error", "message": f"Backend produced no JSON (exit {p.returncode})"}
-
 
 def handle_download(body):
     url = (body or {}).get("url", "").strip()
@@ -147,7 +129,17 @@ def handle_download(body):
                         SESSIONS[sid]["error"] = ev.get("message", "Download failed")
             proc.wait()
             code = proc.returncode
-            files = sorted(f for f in os.listdir(dl_dir) if not f.startswith(".")) if os.path.isdir(dl_dir) else []
+            
+            # Recursively find all audio files in the download directory
+            audio_exts = {".flac", ".mp3", ".m4a", ".aac", ".wav", ".opus"}
+            all_files = []
+            for root, _, fnames in os.walk(dl_dir):
+                for fname in fnames:
+                    if not fname.startswith(".") and os.path.splitext(fname)[1].lower() in audio_exts:
+                        rel_path = os.path.relpath(os.path.join(root, fname), dl_dir)
+                        all_files.append(rel_path)
+            files = sorted(all_files)
+
             with LOCK:
                 SESSIONS[sid]["files"] = files
                 if code == 0 and files:
@@ -164,7 +156,6 @@ def handle_download(body):
     threading.Thread(target=_do_download, daemon=True).start()
     return 200, {"type": "download_started", "session": sid, "status": "pending"}
 
-
 def handle_status(sid):
     with LOCK:
         s = SESSIONS.get(sid)
@@ -177,7 +168,6 @@ def handle_status(sid):
             "completed_tracks": s["completed_tracks"],
             "message": s.get("error"),
         }
-
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -225,7 +215,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not base or not name:
                 self.send_error(404)
                 return
-            full = os.path.join(base, os.path.basename(name))
+            # Prevent directory traversal, but allow subdirectories
+            full = os.path.normpath(os.path.join(base, name))
+            if not full.startswith(os.path.normpath(base)):
+                self.send_error(404)
+                return
             if not os.path.isfile(full):
                 self.send_error(404)
                 return
@@ -252,7 +246,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         self._send_json(status, obj)
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default=HOST)
@@ -264,7 +257,6 @@ def main():
         server.serve_forever()
     except KeyboardInterrupt:
         pass
-
 
 if __name__ == "__main__":
     main()

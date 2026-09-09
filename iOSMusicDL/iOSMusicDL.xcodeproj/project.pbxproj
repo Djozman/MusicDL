@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		053449A0D9A273D65229EF9B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8D7950A4BC802A543850216 /* Assets.xcassets */; };
 		1F07066E08B6DD56B1370847 /* MusicDLApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DE34473D35FA01AD2EFC06 /* MusicDLApp.swift */; };
 		8F200C02223291A735522165 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19864903A586597B9AC13A8F /* APIClient.swift */; };
 		A7506675D76BB16C3D7F20A9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6517BB58B8025823838B4541 /* ContentView.swift */; };
@@ -19,6 +20,7 @@
 		6517BB58B8025823838B4541 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8E2A6745D3F77FC17C649E76 /* iOSMusicDL.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iOSMusicDL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF6A7D63613191DACF05F65D /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		F8D7950A4BC802A543850216 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -45,6 +47,7 @@
 		AF0A1CF177CF9BE6FA888BF6 = {
 			isa = PBXGroup;
 			children = (
+				F8D7950A4BC802A543850216 /* Assets.xcassets */,
 				5F413640E81024ACE3471EBB /* iOSMusicDL */,
 				7D85C66D71BEC9F68FDE8D02 /* Products */,
 			);
@@ -58,6 +61,7 @@
 			buildConfigurationList = 4A51547D95F7AD5599EBA577 /* Build configuration list for PBXNativeTarget "iOSMusicDL" */;
 			buildPhases = (
 				56107BD29C7365E0C3864FA0 /* Sources */,
+				062AE8D7DA2A46A5F79B7A74 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -99,6 +103,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		062AE8D7DA2A46A5F79B7A74 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				053449A0D9A273D65229EF9B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		56107BD29C7365E0C3864FA0 /* Sources */ = {
